@@ -1,0 +1,39 @@
+---------------------REPORT 1
+
+--list the details of customer who has hired a vehicle more than once
+
+SELECT c.Customer_ID, c.Customer_name, h.hire_days
+FROM Customer c, Hire h
+WHERE c.customer_id=h.customer_id 
+AND  hire_days>1
+ORDER BY Hire_days; 
+
+---------------------REPORT 2
+
+--list the vehicles which has not been hired
+
+SELECT v.vehicle_no, v.classification, v.model, v.charge, h.hire_no
+FROM vehicles v, hire h
+WHERE h.hire_no (+) = v.hire_no
+AND v.hire_no is NULL;
+
+
+---------------------REPORT 3
+
+--most recently hired vehicle
+
+SELECT contract_no, start_date, customer_id
+FROM contract
+WHERE (start_date,customer_id) 
+IN
+(SELECT MAX(start_date), customer_id FROM contract 
+GROUP BY  customer_id);
+
+---------------------REPORT 4
+
+--review with customer regarding the vehicle hire
+
+SELECT ct.customer_id,c.customer_name,c.contact_no, ct.Contract_no, ct.end_date, add_months(end_date,2) review_date
+FROM contract ct  INNER JOIN customer c 
+ON ct.customer_id=c.customer_id
+ORDER BY add_months(end_date,2);

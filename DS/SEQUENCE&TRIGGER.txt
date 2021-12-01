@@ -1,0 +1,31 @@
+-------------------SEQUENCE FOR CUSTOMER ID
+
+CREATE SEQUENCE  Customer_Id_seq   INCREMENT BY 1 START WITH 106; 
+
+----------------------TRIGGER FOR Customer_Id_seq 
+
+CREATE OR REPLACE EDITIONABLE TRIGGER  CustomerID_trigger
+BEFORE 
+insert on Customer
+for each row 
+begin 
+  if :NEW.CUSTOMER_ID is null then  
+    select Customer_Id_seq.nextval into :NEW.CUSTOMER_ID from sys.dual;  
+  end if;  
+end;
+
+-------------------SEQUENCE FOR HIRE NO
+
+CREATE SEQUENCE  Hire_no_seq   INCREMENT BY 1 START WITH 8; 
+
+----------------------TRIGGER FOR Hire_no_seq 
+
+CREATE OR REPLACE EDITIONABLE TRIGGER  Hireno_trigger
+BEFORE 
+insert on Hire
+for each row 
+begin 
+  if :NEW.Hire_no is null then  
+    select Hire_no_seq.nextval into :NEW.Hire_no from sys.dual;  
+  end if;  
+end;

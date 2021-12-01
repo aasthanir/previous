@@ -1,0 +1,119 @@
+---------------------------------TRIGGER 1: CUSTOMER AUDITING
+
+DROP TABLE Customer_tmp CASCADE CONSTRAINTS;
+CREATE TABLE Customer_tmp (
+Customer_ID      NUMBER(10),
+Customer_Name VARCHAR(30) ,
+Contact_no  NUMBER(20),
+Gender   CHAR(7),
+Address VARCHAR(30),
+a_user VARCHAR2(30),
+a_date DATE,
+a_action  VARCHAR2(30)
+);
+
+DROP TRIGGER Customer_trigger;
+CREATE OR REPLACE TRIGGER Customer_trigger
+  AFTER INSERT OR DELETE OR UPDATE ON Customer
+  FOR EACH ROW
+DECLARE
+ --variable for declaring update, delete or insert
+  vc_trigger_action VARCHAR2(30);
+BEGIN
+  IF updating
+  THEN
+    -- incase of updating 
+    vc_trigger_action := 'Data UPDATE';
+    ELSIF inserting
+  THEN
+   -- incase of inserting
+    vc_trigger_action := 'Data INSERT';
+  ELSIF deleting
+  THEN
+   -- incase of deleting
+    vc_trigger_action := 'Data DELETE';
+  END IF;
+  
+  IF vc_trigger_action IN ('Data DELETE','Data UPDATE') THEN
+      -- if vc_trg_action is DELETE or UPDATE then insert old table values
+   INSERT INTO Customer_tmp
+  (Customer_ID,Customer_Name,Contact_no,Gender,Address,a_user ,a_date,a_action)
+   VALUES
+  (:OLD.Customer_ID, :OLD.Customer_Name, :OLD.Contact_no,:OLD.Gender,:OLD.Address,v('APP_USER'), SYSDATE, vc_trigger_action);
+  ELSE
+      -- if vc_trg_action is INSERT then insert new table values
+   INSERT INTO Customer_tmp
+  (Customer_ID,Customer_Name,Contact_no,Gender,Address,a_user ,a_date,a_action)
+   VALUES
+  (:NEW.Customer_ID, :NEW.Customer_Name, :NEW.Contact_no,:NEW.Gender,:NEW.Address,UPPER(v('APP_USER')), SYSDATE, vc_trigger_action);
+  END IF;  
+END customer_trigger;
+
+------------------------------------TESTING CODE FOR TRIGGER 1:
+
+INSERT INTO CUSTOMER  VALUES (105,'Daisy Quinn',9835728190 ,'Female','Taplejung',502);
+INSERT INTO CUSTOMER VALUES (145,'Unique Laun',9754278910,'Male','Thapathali',501);
+
+UPDATE Customer
+set customer_name='Lucky'
+where customer_id=145;
+
+DELETE FROM Customer
+WHERE customer_id=145;
+
+SELECT * FROM Customer_tmp;
+
+-----------------------------Additional trigger 
+CREATE TABLE insurance_tmp as select * from insurance;
+CREATE TABLE customer_tmp as select * from customer;
+
+CREATE OR REPLACE TRIGGER insurance_null
+AFTER DELETE OR UPDATE OF insurance_id  on insurance_tmp
+FOR EACH ROW
+BEGIN 
+IF UPDATING AND :OLD.insurance_id!= :NEW.insurance_id THEN
+    UPDATE customer_tmp SET insurance_id=NULL
+    WHERE customer_tmp.insurance_id = :old.insurance_id;
+END IF;
+END;
+
+----------------------------testing for additional trigger
+
+UPDATE insurance_tmp SET insurance_id=503
+WHERE insurance_id=501;
+SELECT * FROM insurance_tmp;
+
+DELETE FROM insurance_tmp
+WHERE insurance_id=502;
+SELECT * FROM insurance_tmp;
+
+--------------------------------------TRIGGER 2:
+
+CREATE TABLE Company_holidays (Day DATE);
+INSERT INTO Company_holidays VALUES ('12/25/2020');
+INSERT INTO Company_holidays VALUES ('12/26/2020');
+INSERT INTO Company_holidays VALUES ('1/1/2021');
+INSERT INTO Company_holidays VALUES ('12/31/2020');
+
+CREATE OR REPLACE TRIGGER Holidays_trigger
+  BEFORE INSERT OR DELETE OR UPDATE ON Contract
+DECLARE
+  holiday             INTEGER;
+  Not_on_holidays    EXCEPTION;
+  BEGIN
+  /* Check for company holidays: */
+   SELECT COUNT(*) INTO holiday FROM Company_holidays
+     WHERE TRUNC(Day) = TRUNC(Sysdate); -- Discard time parts of dates
+   IF holiday > 0 THEN
+     RAISE Not_on_holidays;
+   END IF;
+   EXCEPTION
+   WHEN Not_on_holidays THEN
+    Raise_application_error(-20325,'Might not change '
+      ||'employee table during a holiday');
+
+ END;
+
+------------------------------TESTING TRIGGER 2
+
+INSERT INTO Contract values (	901,'06/06/2020','12/31/2020',101,6784);
