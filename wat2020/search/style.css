@@ -1,0 +1,37 @@
+.title-search-form {
+    text-align: center;
+    align-items: center;
+}
+
+p {
+    text-align: center;
+}
+
+.category-search-form {
+    text-align: center;
+    align-items: center;
+}
+
+.display-content {
+    text-align: center;
+    align-items: center;
+}
+
+.all-books-container {
+    text-align: center;
+    align-items: center;
+}
+
+th,
+td {
+    padding: 15px;
+}
+
+h2 {
+    color: red;
+    text-align: center;
+}
+
+h3 {
+    text-align: center;
+}
